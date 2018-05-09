@@ -3,6 +3,7 @@
 #  Creates aliases for makin common actions quicker and close to linux or osx usess, syntax
 #
 #--------------------------------------
+Write-Host "aliases.ps1 module called..." -ForegroundColor "Red"
 
 # Easier Navigation: .., ..., ...., ....., and ~
 ${function:~} = { Set-Location ~ }

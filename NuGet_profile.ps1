@@ -1,5 +1,6 @@
 # Profile for the Visual Studio Shell, only. (e.g. Package Manager Console)
 # ===========
+Write-Host "NuGet_profile.ps1 module called..." -ForegroundColor "Red"
 
 Push-Location (Split-Path -parent $profile)
 "components-nuget" | Where-Object {Test-Path "$_.ps1"} | ForEach-Object -process {Invoke-Expression ". .\$_.ps1"}

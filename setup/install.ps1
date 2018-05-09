@@ -81,14 +81,20 @@ Write-Host "Installing to..." $dotfilesInstallDir
 Write-Host "Processing :: dotfilesInstallDir: " $dotfilesInstallDir " ... calling .\bootstap.ps1"
 Push-Location $dotfilesInstallDir
 & .\bootstrap.ps1
+. .\Get-PackageParameters.ps1
+. .\Java.ps1
+. .\SonarQube.pms1
+. .\SetupSonarQube.ps1
 . .\deps.ps1
 . .\functions.ps1
 . .\exports.ps1
 . .\aliases.ps1
+. .\components.ps1
+. .\components-nuget.ps1
 Pop-Location
 
 $newProcess = new-object System.Diagnostics.ProcessStartInfo "PowerShell";
 $newProcess.Arguments = "-nologo";
-# [System.Diagnostics.Process]::Start($newProcess);
+[System.Diagnostics.Process]::Start($newProcess);
 exit
 

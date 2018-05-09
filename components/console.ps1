@@ -1,5 +1,6 @@
 # Utilities to manage PowerShell Consoles
 # Based on code from ConCFG: https://github.com/lukesampson/concfg/
+Write-Host "console.ps1 module called..." -ForegroundColor "Red"
 
 Add-Type -TypeDefinition @'
 using System;

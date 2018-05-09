@@ -1,4 +1,5 @@
 # These components will be loaded when running Microsoft.Powershell (i.e. Not Visual Studio)
+Write-Host "components-shell.ps1 module called..." -ForegroundColor "Red"
 
 Push-Location (Join-Path (Split-Path -parent $profile) "components")
 

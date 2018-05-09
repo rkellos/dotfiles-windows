@@ -11,6 +11,7 @@
 #        curl
 #        custom written functions
 #--------------------------------------- 
+Write-Host "functions.ps1 module called..." -ForegroundColor "Red"
 
 # Basic commands for cmd-line (powershell), matchin osx or linux
 function which($name) { Get-Command $name -ErrorAction SilentlyContinue | Select-Object Definition }

@@ -11,6 +11,7 @@
 #        curl
 #        custom written functions
 #--------------------------------------- 
+Write-Host "deps.ps1 module called..." -ForegroundColor "Red"
 
 # Check to see if we are currently running "as Administrator"
 if (!(Verify-Elevated)) {
@@ -51,7 +52,7 @@ Import-PackageProvider ChocolateyGet
 Write-Host "Installing PowerShell Modules..." -ForegroundColor "Magenta"
 Install-Module Posh-Git -Scope CurrentUser -Force
 #Install-Module PSWindowsUpdate -Scope CurrentUser -Force
-Install-module PowerShellGet -Scope CurrentUser -Force -AllowClobber ## (https://docs.microsoft.com/en-us/powershell/gallery/readme)
+Install-Module PowerShellGet -Scope CurrentUser -Force -AllowClobber ## (https://docs.microsoft.com/en-us/powershell/gallery/readme)
 Install-Module -Name 7Zip4Powershell -Scope CurrentUser -Force # provide powershell zip capability
 
 #usage: install-msiproduct .\example.msi -destination (join-path $env:ProgramFiles Example)
@@ -65,7 +66,46 @@ Install-Package msi -provider PowerShellGet -Scope CurrentUser -Force
 # Add-WindowsPSModulePath -Scope CurrentUser -Force
 
 Write-Host "Installing Developer Tools..." -ForegroundColor "Blue"
+$Global:CurrentDirectory = Split-Path $Script:MyInvocation.MyCommand.Path
 #install some developer tools
+###
+# ## VSCode, first
+# # $ErrorActionPreference = 'Stop'
+ 
+# # $toolsDir = Split-Path $MyInvocation.MyCommand.Definition
+ 
+# $pp = Get-PackageParameters 
+# $mergeTasks = "!runCode"
+# $mergeTasks += ', ' + '!'*$pp.NoDesktopIcon        + 'desktopicon'
+# $mergeTasks += ', ' + '!'*$pp.NoQuicklaunchIcon    + 'quicklaunchicon'
+# $mergeTasks += ', ' + '!'*$pp.NoContextMenuFiles   + 'addcontextmenufiles'
+# $mergeTasks += ', ' + '!'*$pp.NoContextMenuFolders + 'addcontextmenufolders'
+# $mergeTasks += ', ' + '!'*$pp.DontAddToPath        + 'addtopath'
+# Write-Host "Merge Tasks: `n$mergeTasks"
+ 
+# Get-Process code -ea 0 | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+# Start-Sleep 1
+# Get-Process code -ea 0 | Stop-Process  #in case gracefull shutdown did not succeed, try hard kill
+ 
+# $packageArgs = @{
+#   packageName    = 'visualstudiocode'
+#   fileType       = 'EXE'
+#   url            = 'https://az764295.vo.msecnd.net/stable/7c7da59c2333a1306c41e6e7b68d7f0caa7b3d45/VSCodeSetup-ia32-1.23.0.exe'
+#   url64bit       = 'https://az764295.vo.msecnd.net/stable/7c7da59c2333a1306c41e6e7b68d7f0caa7b3d45/VSCodeSetup-x64-1.23.0.exe'
+ 
+#   softwareName   = 'Microsoft Visual Studio Code'
+ 
+#   checksum       = 'e169e2d39c0d094417a21d3b159d2bf986e82c9b73abe243ca1e07cf596cfecb'
+#   checksumType   = 'sha256'
+#   checksum64     = '3313356942dcb24376008eb3fc1d0580c9799f66bcfd3fb8992bc3699f447421'
+#   checksumType64 = 'sha256'
+ 
+#   silentArgs     = "/verysilent /suppressmsgboxes /mergetasks=""$mergeTasks"" /log=""$env:temp\vscode.log"""
+#   validExitCodes = @(0, 3010, 1641)
+# }
+ 
+# Install-ChocolateyPackage @packageArgs
+
 find-package notepadplusplus -verbose -provider ChocolateyGet -AdditionalArguments --exact | install-package -Force
 find-package 7Zip -verbose -provider ChocolateyGet -AdditionalArguments --exact | install-package -Force
 
@@ -77,7 +117,7 @@ if ((which cinst) -eq $null) {
     choco feature enable -n=allowGlobalConfirmation
 }
 
-# system and cli
+# system and cli -- some choco calls are backup-installs, a second-try
 choco install curl                --limit-output
 choco install nuget.commandline   --limit-output
 choco install webpi               --limit-output
@@ -155,12 +195,12 @@ nvm install 10.0
 ### Node Packages used for installation
 Write-Host "Installing Node Packages..." -ForegroundColor "Yellow"
 if (which npm) {
-    npm update npm -gdl
+    npm i npm -gdl
     npm update -g
     npm dedupe -g
     npm install -g gulp
     npm install -g mocha
-    npm install -g node-inspector
+    # npm install -g node-inspector
     npm install -g yo
     npm doctor -g
     npm rebuild -g
@@ -187,199 +227,35 @@ if (which Install-VSExtension) {
     Install-VSExtension https://madskristensen.gallerycdn.vsassets.io/extensions/madskristensen/ignore/1.2.71/1482143287772/212799/18/ignore%20v1.2.71.vsix
 }
 
-function Get-InstalledSoftwares
-{
-	$installedSoftwares = @{}
-	$path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall" 
-    $registry32 = [microsoft.win32.registrykey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
-    $registry64 = [microsoft.win32.registrykey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
-	$packages = RetrievePackages $path $registry32
-	$packages += RetrievePackages $path $registry64
-
-	$packages.Where({$_.DisplayName}) |% { 
-		if(-not($installedSoftwares.ContainsKey($_.DisplayName)))
-		{
-			$installedSoftwares.Add($_.DisplayName, $_) 
-		}
-	}
-    $installedSoftwares.Values
+# Write-Host "Installing Janus..." -ForegroundColor "Yellow"
+Write-Host "ready to attempt java download..." -ForegroundColor "Yellow"
+if ((which curl)) {
+    curl.exe -C - -LR#OH "Cookie: oraclelicense=accept-securebackup-cookie" -k "#https://download.oracle.com/otn-pub/java/jdk/8u171-b11/512cd62ec5174c3487ac17c61aaa89e8/jdk-8u171_windows-x64_bin.exe"
+	Write-Host "java download complete..." -ForegroundColor "White"
 }
 
-function Install-JavaRuntimeEnvironment
+$javaSource = "C:\temp\jdk-8u171_windows-x64_bin.exe"
+$javaInstallFolder = "C:\Program Files\Java" #jdk1.8.0_171
+if(-not(Test-Path $javaSource))
 {
-       [CmdletBinding()]
-       param
-       (
-              [Parameter(Mandatory=$true, Position=0)]
-              [ValidateScript({Test-Path $_})]
-              [string] $JreInstallerPath
-       )
-
-       "Installing java runtime environment" | Write-Verbose
-
-       $arguments = "/s SPONSORS=0 /L $Env:Temp\jre_install.log"
-
-       $proc = Start-Process $JreInstallerPath -ArgumentList $arguments -Wait -NoNewWindow -PassThru
-       if($proc.ExitCode -ne 0)
-       {
-              throw "Unexpected error installing java runtime environment"
-       }
-       [Environment]::SetEnvironmentVariable('JAVA_HOME', "C:\Program Files\Java\jre1.8.0_171\bin", "Machine")
+    Get-Java -DownloadLocation (Split-Path -Parent $javaSource) -Verbose:$RunAsVerboseSession
 }
 
-function Test-JavaInstalled
-{
-       $javaPackage = Get-InstalledSoftwares |? {$_.DisplayName.Contains('Java 8')}
-       return $javaPackage -ne $null
-}
+#Install Java JDK
+Install-JavaRuntimeEnvironment -JreInstallerPath (Join-Path $javaInstallFolder jdk-8u171) -Verbose
 
-#Install JRE
-if(-not (Test-JavaInstalled))
-{
-       Install-JavaRuntimeEnvironment "C:\dev\dotfiles-windows\components\jdk-8u171-windows-x64.exe" -Verbose
-}
-
-function Get-SonarQube
-{
-    #    [CmdletBinding()]
-    #    param
-    #    (
-    #           [Parameter(Mandatory=$false, Position=0)]
-    #           [string] $DownloadLink = "https://sonarsource.bintray.com/Distribution/sonarqube/sonarqube-7.1.zip",
-
-    #           [Parameter(Mandatory=$false, Position=1)]
-    #           [ValidateScript({Test-Path $_})]
-    #           [string] $DownloadLocation = "C:\dev\dotfiles-windows\components\"
-    #    )
-
-    #    $fileName = $DownloadLink.SubString($DownloadLink.LastIndexOf("/") + 1)
-
-    #    $target = Join-Path $DownloadLocation $fileName
-      
-    #    "Starting download file $DownloadLink" | Write-Verbose
-    #    Invoke-WebRequest -Uri $DownloadLink -OutFile $target
-    #    "Completed download to $target" | Write-Verbose
-
-    $fileName = "sonarqube-7.1.zip"
-    $sourceLocation = "C:\dev\dotfiles-windows\components\"
-    $target = Join-Path $sourceLocation $fileName
-    
-    $target
-}
-
-function Expand-SonarQubePackage
-{
-       [CmdletBinding()]
-       param
-       (
-              [Parameter(Mandatory=$false, Position=0)]
-              [ValidateScript({Test-Path $_})]
-              [string] $Source = "C:\dev\dotfiles-windows\components\sonarqube-7.1.zip",
-
-              [Parameter(Mandatory=$false, Position=1)]
-              [string] $Target = "C:\SonarQube"
-       )
-
-       if (![System.IO.Directory]::Exists($Target)) {[System.IO.Directory]::CreateDirectory($Target)}
-       if(-not(Test-Path $Target))
-       {
-              "Creating new folder at location : $Target" | Write-Verbose
-              New-Item -ItemType Directory -Path $Target -Force | Out-Null
-       }
-
-       Add-Type -AssemblyName "System.IO.Compression.FileSystem" |  Out-Null
-
-       "Extracting the contents of $Source to $Target" | Write-Verbose
-       [IO.Compression.ZipFile]::ExtractToDirectory($Source, $Target)
-}
-
-$installFolder = "C:\SonarQube"
-
-$source = " C:\dev\dotfiles-windows\components\sonarqube-7.1.zip"
+$source = " C:\temp\sonarqube-7.1.zip"
+$installFolder = "C:\SonarQube"#sonarqube-7.1
 #Download SonarQube server files
+Write-Host "ready to attempt sonar download..." -ForegroundColor "Yellow"
 if(-not(Test-Path $source))
 {
-       Get-SonarQube -DownloadLocation (Split-Path -Parent $source) -Verbose:$RunAsVerboseSession
+    Get-SonarQube -DownloadLocation (Split-Path -Parent $source) -Verbose:$RunAsVerboseSession
+	Write-Host "sonar download complete..." -ForegroundColor "White"
 }
 
-#Extract SonarQube files to the installation folder
-$sonarQubeFolder = Join-Path $installFolder ([IO.Path]::GetFileNameWithoutExtension((Split-Path -Leaf $source)))
-if(-not(Test-Path $sonarQubeFolder))
-{
-       Expand-SonarQubePackage -Source $source -Target $installFolder -Verbose:$RunAsVerboseSession
-}
-
-function Install-SonarQubeService
-{
-       [CmdletBinding()]
-       param
-       (
-              [Parameter(Mandatory=$false, Position=0)]
-              [ValidateScript({Test-Path $_})]
-              [string] $SonarSource = "C:\SonarQube\sonarqube-7.1"
-       )
-
-       if(-not(Join-Path $SonarSource "bin\windows-x86-64\InstallNTService.bat" | Test-Path))
-       {
-              throw "Failed to find a sonarqube installation file"
-       }
-
-       if(( Get-Service |? {$_.Name -eq "SonarQube" }) -eq $null)
-       {
-              "Installing SonarQube service" | Write-Verbose
-              Start-Process -FilePath (Join-Path $SonarSource "bin\windows-x86-64\InstallNTService.bat") -Wait -NoNewWindow
-       }
-}
 
 #Install SonarQube Service
 Install-SonarQubeService -SonarSource (Join-Path $installFolder sonarqube-7.1) -Verbose
 
-# Before we start the service, we need to update the log on account under which the service is running.
-
-function Get-InstalledSoftwares
-{
-	$installedSoftwares = @{}
-	$path = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall" 
-    $registry32 = [microsoft.win32.registrykey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry32)
-    $registry64 = [microsoft.win32.registrykey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64)
-	$packages = RetrievePackages $path $registry32
-	$packages += RetrievePackages $path $registry64
-
-	$packages.Where({$_.DisplayName}) |% { 
-		if(-not($installedSoftwares.ContainsKey($_.DisplayName)))
-		{
-			$installedSoftwares.Add($_.DisplayName, $_) 
-		}
-	}
-    $installedSoftwares.Values
-}
-
-function Set-ServiceLogonProperties
-{
-       [CmdletBinding()]
-       param
-       (
-              [Parameter(Mandatory=$false, Position=0)]
-              [string] $Name = "SonarQube",
-
-              [Parameter(Mandatory=$false, Position=1)]
-              [string] $Username = "$env:USERDOMAIN\$env:USERNAME"
-       )
-
-       $credential = Get-Credential -UserName $Username -Message "Provide password"
-       $password = $credential.GetNetworkCredential().Password
-
-       $filter = 'Name=' + "'" + $Name + "'" + ''
-       $service = Get-WMIObject -namespace "root\cimv2" -class Win32_Service -Filter $filter
-       $service.Change($null,$null,$null,$null,$null,$null,$Username,$password)
-       $service.StopService()
-
-       while ($service.Started)
-       {
-              sleep 2
-              $service = Get-WMIObject -namespace "root\cimv2" -class Win32_Service -Filter $filter
-       }
-       $service.StartService()
-}
-#Setup sonarqube service account credentials
-Set-ServiceLogonProperties -Verbose
+Write-Host "deps.ps1 complete..." -ForegroundColor "Magenta"

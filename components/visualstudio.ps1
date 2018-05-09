@@ -1,4 +1,6 @@
 # Configure Visual Studio
+Write-Host "visualstudio.ps1 module called..." -ForegroundColor "Red"
+
 if ((Test-Path "hklm:\SOFTWARE\Microsoft\VisualStudio\SxS\VS7") -or (Test-Path "hklm:\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7")) {
     # Add a folder to $env:Path
     function Append-EnvPath([String]$path) { $env:PATH = $env:PATH + ";$path" }

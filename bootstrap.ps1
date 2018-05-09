@@ -4,6 +4,8 @@
 #     from executed powershell file-enrated lists within current execution directory
 #
 #--------------------------------------
+Write-Host "bootstrap.ps1 module called..." -ForegroundColor "Red"
+
 $profileDir = Split-Path -parent $profile
 $componentDir = Join-Path $profileDir "components"
 
